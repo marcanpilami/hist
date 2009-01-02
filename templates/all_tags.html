@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+	<head>
+		<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+		<title>Tags</title>
+	</head>
+	<body>
+		<h2>Tags contenus dans l'historique</h2>
+		{% for tag in tags %}
+		<h3>Tag n°{{tag.level}}{%if tag.comment%} - {{tag.comment}}{%endif%}</h3>
+		<table>
+			<thead>
+				<tr>
+					<th>Essence</th>
+					<th>Version</th>
+				</tr>
+			</thead>
+			<tbody>
+				{% for avatar in tag.versionned_objects.all %}
+				<tr>
+					<th>{{avatar.essence.id}}
+					<th>{{avatar.history_model.history_version}}</th>
+				</tr>
+				{% endfor %}
+			</tbody>
+		</table>
+		{% endfor %}
+	</body>
+</html>

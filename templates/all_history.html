@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+	<head>
+		<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+		<title>Historique complet</title>
+	</head>
+	<body>
+		<h2>Contenu complet de l'historique</h2>
+		<h4>Note : les versions des objets supprimés apparaissent aussi ici.</h4>
+		{% for model in models %}
+		<h3>Modèle : {{model.model}}.</h3>
+		<table>
+			<thead>
+				<tr>
+					<th>Essence</th>
+					<th>Modèle</th>
+					<th>PK</th>
+					<th>Action réalisée</th>
+					<th>Version</th>
+					<th>Moment sauvegarde</th>
+					<th>Changements apportés</th>
+				</tr>		
+			</thead>
+			<tbody>
+				{% regroup  model.objects.all|dictsort:"essence.id" by essence.id as sorted_list %}
+				{% for group in sorted_list %}
+				{% for version_history in group.list|dictsort:"history_version" %}
+				<tr>
+					<td>{{version_history.essence.id}}</td>
+					<td>{{version_history.historized_model}}</td>
+					<td>{{version_history.history_old_pk}}</td>
+					<td>{{version_history.history_action}}</td>
+					<td>{{version_history.history_version}}</td>
+					<td>{{version_history.history_datetime|date:"d M Y H:i"}}</td>
+					<td>{{version_history.diff_prev}}</td>
+				</tr>
+				{% endfor %}
+				<tr><td>.</td></tr>
+				{% endfor %}
+			</tbody>
+		</table>
+		{% endfor %}	
+	</body>
+</html>

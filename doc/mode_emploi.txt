@@ -1,0 +1,275 @@
+Module d'historisation des modifications d'objets
+
+Auteur					: Marc-Antoine Gouillart
+Mail					: mag@newarch.fr
+Dernière modification 	: 14/12/2008
+
+
+
+===================================
+== Sommaire
+===================================
+
+* Introduction
+* Choix du suivi
+* Comment utiliser le module (pour les créateurs d'applications)
+* Comment exploiter l'historique
+* Vues
+* Questions ouvertes, discussion
+* Annexe : API
+
+
+
+===================================
+== Introduction
+===================================
+
+Ce module à pour but de suivre les changements opérés sur des objets d'un 
+modèle particulier.
+
+Ainsi, il sera possible de faire des diff entre les versions, de revenir en 
+arrière ou simplement d'afficher l'histoire d'un objet.
+
+Il ne s'agit pas ici de faire une gestion de version complète. On ne pourra en
+particulier pas gérer des branches.
+
+
+
+===================================
+== Choix de suivi
+===================================
+
+Les choix qui suivent sont plus le résultat des contraintes techniques que 
+d'une volonté fonctionelle. On a systématiquement décidé de faire au plus
+simple.
+
+
+****************************
+** Comportement général
+****************************
+Chaque objet suivi dispose de son propre numéro de version, à la CVS.
+
+Il est possible de donner à tout instant un numéro de version global à tous les
+objets suivis. Cela ressemble au "tag", même si notre mécanisme est destiné à
+être utilisé fréquemment, au contraire du tag qui est le plus souvent une
+opération exceptionelle.
+
+Une nouvelle version est créée à chaque appel de save() (en création ou 
+modification) ou de delete().
+A chaque fois, l'objet suivi est entièrement copié dans une table 
+d'historisation. 
+
+
+****************************
+** Gestion des FK
+****************************
+En aucun cas on ne fera pointer les FK des objets historisés sur des objets
+actifs. Cela aurait pour conséquences ridicules que la suppression d'un objet
+actif pourrait modifier (supprimer !) l'historique, et que l'on mélangerait
+la manipulation d'objets historisés avec celle d'objets actifs.
+
+Le comportement retenu est donc le suivant :
+	* Si l'objet référencé est historisé, c'est l'objet historisé qui est 
+	  référencé
+	* Sinon, le champ de type FK est ignoré et non historisé
+
+Attention, cela peut avoir de lourdes conséquences, notamment si vous cherchez
+à restaurer un objet : les FK vers des objets non historisés ne seront pas 
+restaurées (elles garderont leur valeur d'avant restauration, ou, si l'objet 
+actif avait été supprimé, il vous reste à prier que le champ FK n'était pas
+obligatoire) 
+
+La restauration d'une FK historisée fait pointer la FK vers la version active
+de l'objet référencé. Cela n'entraine donc PAS de restauration automatique de
+l'objet référencé. Cela reste à votre charge. Si l'objet référencé n'est plus 
+actif, cela entraine une exception.
+
+
+****************************
+**Gestion des M2M (sans intermédiaires)
+****************************
+
+
+
+===================================
+== Comment utiliser le module (pour les créateurs d'applications)
+===================================
+
+Le mode opératoire est inspiré de celui associé à l'interface d'administration.
+Pour chaque modèle que l'on choisit de suivre en version, il suffit de joindre
+une classe dérivée de 'hist.models.HistoryModel' contenant une référence au 
+modèle à suivre. La table d'historisation sera automatiquement créé lors du 
+prochain syncdb, et les objets de ce modèle suivis.
+
+Exemple :
+class Marsu(models.Model):
+	nom = models.CharField(max_length = 30)
+	age = models.IntegerField(max_length = 4)
+
+class MarsuHistory(HistoryModel):
+	model = Marsu
+
+
+Il est aussi possible de ne suivre que certains champs, en ajoutant un champ
+'history_fields' à la classe.
+Si ce champ est absent, tous les champs du modèle sont toujours pris en compte.
+
+Exemple :
+class MarsuHistory(HistoryModel):
+	model = Marsu
+	history_fields = ('age',)
+Dans ce cas, seul un changement d'âge provoquera un changement de version.
+
+
+Limitations :
+un modèle utilisant l'historisation ne peut comporter de champs nommés :
+* *_history
+* xxx
+* propriétés current_version (integer), all_versions (queryset)
+
+
+Notes :
+* les tables et objets d'historisation appartienent à l'application initiale,
+  pas à l'application hist. Elles sont donc nettoyées comme les autres lors
+  d'un sqlreset ou autre opération de nettoyage/désinstallation.
+* Attention à la migration de modèles, si vous rajoutez des champs à un modèle
+  suivi il faut aussi rajouter des colonnes aux tables d'historisation !
+
+
+
+===================================
+== Comment exploiter l'historique
+===================================
+
+Eléments ajoutés au modèle suivi :
+* attribut current_version (entier naturel)
+* attribut version_set (queryset contenant toutes les version successives de
+  l'objet dans l'ordre, y compris la version en cours)
+* dans la sous-classe _meta du modèle, est ajouté un champ "history_model"
+  contenant le modèle servant à stocker l'historique.
+
+Objet historique lui-même :
+* le nom du modèle est celui définit par l'auteur (MarsuHistory ci-dessus)
+* c'est un modèle normal. On peut donc faire des requêtes, etc.
+* Les champs sont ceux du modèle suivi (même nom, type, ...) à trois exceptions
+  prêt :
+      - les champs obligatoires ou uniques ne le sont plus
+      - les champs "autofield" sont remplacés par des "IntegerFields"
+      - l'éventuel champ 'id' (normalement un AF) est remplacé par 'history_id'
+* En plus, les champs spécifiques suivants sont ajoutés :
+	  - history_version (entier naturel)
+	  - history_action (creation, update, deletion)
+	  - history_datetime (date et heure de l'opération)
+* Enfin, les attributs (i.e. : pas de requêtes dessus !) suivants sont ajoutés :
+	  - history_old_pk (raccourci vers l'ancienne PK) 
+
+ATTENTION : en aucun cas il ne faut faire d'update sur un objet historique.
+Non que ça ne marche pas, c'est juste abérrant.
+=> Faut-il chercher à l'interdire vraiment ? C'est assez facile...
+
+
+Requête sur un objet particulier.
+Tous les objets d'un niveau de version donné.
+Attention, faire du transactionnel.
+Vue donnant l'historique d'un objet. (avec les diffs)
+Diffeur.
+Revenir en arrière.
+
+
+
+===================================
+== Vues
+===================================
+
+L'application est livrée avec des vues et les templates minimaux correspondant.
+
+Ces vues ne sont pas destinées à être mises en exploitation, mais à servir 
+d'exemples et d'aide au débug.
+
+Ces vues sont :
+* Liste des différentes versions des objets existants
+* Liste de toutes les versions recensées de tous les objets, y compris les
+  objets supprimés.
+* Liste des niveaux
+
+
+
+===================================
+== Questions ouvertes, discussion
+===================================
+
+Purges ? Pourquoi pas JAMAIS ?
+Liens : faut-il pointer vers les objets rééls ou vers les objets archivés ? 
+		Que faire si les objets cible ne sont pas eux-mêmes archivés ?
+Est-ce une bonne chose d'avoir les informations de suivi (date, numéro de
+version) directement dans le modèle historique ?		
+Si vous avez des idées de vues génériques ou autres...
+
+		
+Les mauvais côtés :
+* Duplication systématique de tous les objets, c'est moche.
+* Duplication = maintien de deux structures en // lors des modifs de modèle
+* De plus, ce niveau de découplage oblige à utiliser les signaux, qui sont 
+  lents. (ralentit donc légèrement la sauvegarde des modèles suivis)
+  
+Les bons côtés :
+* Utilisation de toutes les ressources Django : requêtes, filtres...
+  => facilité d'exploitation
+* On n'alourdit pas le modèle initial, et c'est simple à mettre en place.
+* L'historique est stocké bien à part des données courantes, ne ralentit pas
+  les requêtes.
+
+  
+ 
+===================================
+== Annexe : API
+===================================
+
+Les objets de l'API sont les suivants :
+
+* classe 'hist.models.Level'. Accès en lecture seule à :
+	- Level.level				numéro incrémentiel
+	- Level.datetime			moment de la création du niveau 
+	- Level.comment				réservé pour usage futur
+	- Level.versionned_objects	queryset sur tous les objets historiques du
+								niveau.
+	
+Les objets Level ne peuvent être créés que par la fonction Level.objects.snap()
+et en aucun cas directement.
+
+* classe abtraite 'hist.models.HistoryModel'. Accès en lecture seule à :
+	- HistoryModel.history_datetime
+	- HistoryModel.history_action 			 choix : creation, udpate, deletion
+	- HistoryModel.history_version 			 numéro incrémentiel
+	- HistoryModel.history_comment 			 réservé pour usage futur
+	- HistoryModel.history_active_object 	 lien vers l'objet actif s'il existe
+	- HistoryModel.history_linked_to_version selon usage 
+
+Ces objets ne sont jamais créés directement ou autre. L'application hist s'en 
+charge elle-même.
+Cette classe sert de classe de base aux objets stockant l'historique, cf. 
+tutorial ci-dessus. Aucune autre utilisation directe permise, la manipulation 
+se faisant via les classes filles.
+
+* classe ModelDiff. Usage à déterminer.
+
+* Fonction : Level.revert_to()
+  tous les objets du niveau sont restaurés
+
+* Fonction : Historized_object.revert_to(version)
+  l'objet est rétabli dans sa version 'version'
+
+* Attribut : Historized_object.diff_prev
+  renvoie un objet ModelDiff contenant les différences avec la version 
+  précédente.
+  
+* Fonction : Historized_object.diff_with(other_historized_object)
+  devinez.
+  
+* Fonction : Level.objects.snap()
+  les dernières versions *sauvegardées* des objets suivis sont recensées et 
+  liées dans un nouvel objet Level renvoyé par la fonction. 
+  
+Les modèles, fonctions, attributs, etc. non référencés ici ne sont pas censés 
+être utilisés par une application tierce.
+

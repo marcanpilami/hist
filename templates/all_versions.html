@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+	<head>
+		<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+		<title>Historique objets actifs</title>
+	</head>
+	<body>
+		<h2>Versions successives de tous les objets suivis</h2>
+		<h4>Note : les versions des objets supprimés n'apparaissent pas ici.</h4>
+		{% for model in models %}
+		<table>
+			<thead>
+				<tr>
+					<th>action</th>
+					<th>date de l'action</th>
+					<th>changements</th>
+				</tr>		
+			</thead>
+			<tbody>
+				{% for obj in model.objects.all %}
+				<tr>
+					<td colspan="2">Objet suivi : {{obj}}</td>
+				</tr>
+				{% for version_history in obj.version_set.all %}
+				<tr>
+					<td>{{version_history.history_action}}</td>
+					<td>{{version_history.history_datetime|date:"d M Y H:i"}}</td>
+					<td>{{version_history.diff_prev}}</td>
+				</tr>
+				{% endfor %}
+				<tr><td>.</td></tr>
+				{% endfor %}
+			</tbody>
+		</table>
+		{% endfor %}	
+	</body>
+</html>
