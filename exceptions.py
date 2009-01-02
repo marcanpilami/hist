@@ -1,5 +1,14 @@
 #coding: UTF-8
 
+"""
+    All the exceptions thrown by the hist application.
+    Those exceptions are part of the API.
+    
+    @author: Marc-Antoine Gouillart
+    @copyright: Marc-Antoine Gouillart, 2009
+    @license: GNU GPL v3
+    
+"""
 
 class HistoryException(Exception):
     pass

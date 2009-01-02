@@ -1,5 +1,15 @@
 #coding: UTF-8
 
+"""
+    Event handlers for keeping track of the modifications made on historised objects.
+    These functions are private to the hist application.
+    
+    @author: Marc-Antoine Gouillart
+    @copyright: Marc-Antoine Gouillart, 2009
+    @license: GNU GPL v3
+    
+"""
+
 ## Django imports
 from django.db import models
 from django.db.models.base import ModelBase

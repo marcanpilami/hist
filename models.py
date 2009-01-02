@@ -4,7 +4,7 @@
     History module.
     
     @author: Marc-Antoine Gouillart
-    @copyright: Marc-Antoine Gouillart, 2008
+    @copyright: Marc-Antoine Gouillart, 2009
     @license: GNU GPL v3
     
     @note: inspired by the Django admin interface and a proof-of-concept demonstrator of dynamic model creation

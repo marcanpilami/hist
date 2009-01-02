@@ -1,5 +1,13 @@
 #coding: UTF-8
 
+"""
+    Private functions for the hist application. 
+    These functions are not part of the API.
+    
+    @author: Marc-Antoine Gouillart
+    @copyright: Marc-Antoine Gouillart, 2009
+    @license: GNU GPL v3
+"""
 
 def _getCurrentVersion(object):
     return object.version_set.latest('history_datetime').history_version

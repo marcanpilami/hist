@@ -1,3 +1,14 @@
+#coding: UTF-8
+
+"""
+    Sample views for the history application.
+    These views give an outlook on the different history objects. 
+    
+    @author: Marc-Antoine Gouillart
+    @copyright: Marc-Antoine Gouillart, 2009
+    @license: GNU GPL v3
+    
+"""
 
 from models import *
 from django.contrib.contenttypes.models import ContentType
