@@ -20,6 +20,7 @@
 					<th>Version</th>
 					<th>Moment sauvegarde</th>
 					<th>Changements apportés</th>
+					<th>Notes</th>
 				</tr>		
 			</thead>
 			<tbody>
@@ -34,6 +35,7 @@
 					<td>{{version_history.history_version}}</td>
 					<td>{{version_history.history_datetime|date:"d M Y H:i"}}</td>
 					<td>{{version_history.diff_prev}}</td>
+					<td>{{version_history.history_comment}}</td>
 				</tr>
 				{% endfor %}
 				<tr><td>.</td></tr>
