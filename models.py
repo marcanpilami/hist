@@ -53,8 +53,7 @@ class HistoryModelBase(ModelBase):
             spied_model._meta.history_model = new_class
             
             ## Copy basic fields
-            for field in spied_model._meta.fields:
-                
+            for field in spied_model._meta.fields:     
                 ## PK handling
                 if field.primary_key:  
                     _field = copy.copy(field)
@@ -64,9 +63,9 @@ class HistoryModelBase(ModelBase):
                         _field.name = 'history_id'
                     
                     _field.primary_key = False
-                    if _field.unique:
-                        _field.unique = False
+                    if _field.unique: _field.unique = False
                     _field.history_field = True
+                    _field.null = True
                     new_class.add_to_class(_field.name, _field)
                     def __getOldPK(self):
                         return getattr(self, self._meta.HOP)
