@@ -13,7 +13,7 @@ from exceptions import *
 from helpers_copy import _copy_object
 
 
-def _revert_to(avatar):
+def _revert_to(avatar, fork = False):
     """
         Main restoration function.
         
@@ -23,10 +23,11 @@ def _revert_to(avatar):
         
         @raise DeletedObject: if a referenced object (FK, M2M) doesn't exist any more and hence prevents restoration.
         @param avatar: the archive to restore.
+        @param fork: set to True to create a new object, unrelated to the copied target essence. 
     """  
     ## Target instance
-    if not avatar.history_active_object:
-        instance = history_object.historized_model()
+    if not avatar.history_active_object or fork:
+        instance = avatar.historized_model()
     else:
         instance = avatar.history_active_object
     
@@ -76,7 +77,7 @@ def _revert_to(avatar):
     
     
     ## Restore the links to active objects in all avatars
-    if not avatar.history_active_object:
+    if not avatar.history_active_object and not fork:
         for av in avatar.essence.avatar_set.all():
             avc = av.history_final_type
             avc.history_active_object = instance
@@ -84,12 +85,18 @@ def _revert_to(avatar):
     
     
     ## Log the restoration
-    ho = _copy_object(instance, 'restore', instance.current_version + 1, u'restauration de la version %s' %avatar.history_version)
+    if fork:
+        ho = _copy_object(instance, 'create', 0, u'fork de la version %s de l\'essence %s' %(avatar.history_version, avatar.essence.id))
+    else:
+        ho = _copy_object(instance, 'restore', instance.current_version + 1, u'restauration de la version %s' %avatar.history_version)
     ho.history_linked_to_version = avatar
     ho.save()
     
     ## Re-enable hist
     instance._meta.history_disabled = False
+    
+    ## End
+    return instance
 
 
 def _revert_instance_to_version(instance, version):
@@ -118,4 +125,17 @@ def _revert_latest_commit(instance):
     version = instance.current_version - 1
     print version
     _revert_instance_to_version(instance, version)
+
+
+def _fork(object):
+    ## The object may be an active instance of an historised model
+    try:
+        history_model = object._meta.history_model
+        return _revert_to(object.current_avatar, True)
+    except AttributeError:
+        pass
+    
+    ## It may be an avatar
+    return _revert_to(object, True)
+     
     

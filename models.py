@@ -26,7 +26,7 @@ import django.dispatch
 from exceptions import *
 #from handlers import before_save_event_handler, after_save_event_handler, before_delete_event_handler
 from helpers import _getCurrentVersion, _diffWithPreviousVersion, _getCurrentVersionObject, _getObjectEssence, _diffWithCurrentVersion
-from helpers_revert import _revert_instance_to_version, _revert_latest_commit
+from helpers_revert import _revert_instance_to_version, _revert_latest_commit, _fork
 
 
 
@@ -121,6 +121,7 @@ class HistoryModelBase(ModelBase):
             ## Add helper functions to the spied upon object
             spied_model.history_revert_to = _revert_instance_to_version
             spied_model.history_cancel_latest_commit = _revert_latest_commit
+            spied_model.history_fork = _fork
             
             ## Delete overload, but we must take into account an optional overload by the user himself
             spied_model.history_delete = spied_model.delete  
@@ -157,6 +158,7 @@ class Avatar(models.Model):
     def _history_getTrueModel(self):
         return self.history_final_type.get_object_for_this_type(id=self.id) 
     history_model = property(_history_getTrueModel)
+    history_fork = _fork
     
     
 class HistoryModel(Avatar):
