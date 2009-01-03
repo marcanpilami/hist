@@ -21,6 +21,25 @@ from models import Essence
 from helpers import ModelDiff
 
 
+def __instance_should_be_historised(instance):
+    """
+        Checks whether an object should be followed by hist.
+    
+        @param instance: the object that was modified
+        @return: True or False
+    """
+    try:
+        history_model = instance._meta.history_model
+    except AttributeError:
+        return False
+    try:
+        if instance._meta.history_disabled:
+            return False
+    except AttributeError:
+        pass
+    return True
+
+
 def __copy_object(original, action_code, version, comment):
     """factorization of common copy code for all signal handlers"""
     ## Check it is not a "blank" save
@@ -91,12 +110,9 @@ def __copy_object(original, action_code, version, comment):
 def after_save_event_handler(sender, instance, **kwargs):
     """Signal handler for creations"""
     ## Check this object really should be followed by hist
-    try:
-        history_model = instance._meta.history_model
-    except AttributeError:
+    if not __instance_should_be_historised(instance):
         return
-    if not history_model:
-        raise NoHistoryModel(instance)
+    history_model = instance._meta.history_model
     
     ## Check it is a new object
     try:
@@ -109,12 +125,9 @@ def after_save_event_handler(sender, instance, **kwargs):
 def before_save_event_handler(sender, instance, **kwargs):
     """Signal handler for updates"""
     ## Check this object really should be followed by hist
-    try:
-        history_model = instance._meta.history_model
-    except AttributeError:
+    if not __instance_should_be_historised(instance):
         return
-    if not history_model:
-        raise NoHistoryModel(instance)
+    history_model = instance._meta.history_model
     
     ## Check it is an update and not a creation
     if not instance.id:
@@ -137,12 +150,9 @@ def before_save_event_handler(sender, instance, **kwargs):
 def before_delete_event_handler(sender, instance, **kwargs):
     """signal handler for deletions"""
     ## Check this object really should be followed by hist
-    try:
-        history_model = instance._meta.history_model
-    except AttributeError:
+    if not __instance_should_be_historised(instance):
         return
-    if not history_model:
-        raise NoHistoryModel(instance)
+    history_model = instance._meta.history_model
     
     ## Deleted version
     version = instance.current_version + 1
