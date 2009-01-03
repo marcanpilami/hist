@@ -2,7 +2,7 @@ Module d'historisation des modifications d'objets
 
 Auteur					: Marc-Antoine Gouillart
 Mail					: mag@newarch.fr
-Dernière modification 	: 14/12/2008
+Dernière modification 	: 03/01/2009
 
 
 
@@ -31,7 +31,7 @@ Ainsi, il sera possible de faire des diff entre les versions, de revenir en
 arrière ou simplement d'afficher l'histoire d'un objet.
 
 Il ne s'agit pas ici de faire une gestion de version complète. On ne pourra en
-particulier pas gérer des branches.
+particulier pas gérer des branches de façon exhaustive.
 
 
 
@@ -42,6 +42,20 @@ particulier pas gérer des branches.
 Les choix qui suivent sont plus le résultat des contraintes techniques que 
 d'une volonté fonctionelle. On a systématiquement décidé de faire au plus
 simple.
+
+
+****************************
+** Vocabulaire
+****************************
+
+* Un modèle suivi en version par hist sera appelé "modèle historisé"
+* Une instance d'un modèle historisé sera appelée "objet historisé"
+* Un objet historisé peut avoir eu plusieurs versions appelées "avatar".
+* Les différents avatars ne sont pas relatifs à l'objet historisé (car il
+  évolue au cours du temps, voir peut disparaitre), mais à son "essence".
+
+On peut aussi voir les choses ainsi : l'âme d'un objet est immortelle, et 
+s'incarne successivement dans des avatars. 
 
 
 ****************************
@@ -59,6 +73,10 @@ modification) ou de delete().
 A chaque fois, l'objet suivi est entièrement copié dans une table 
 d'historisation. 
 
+La restauration d'une version donnée est considérée comme un commit en soi, et
+donc incrémente le numéro de version de l'objet (on ne reprend pas le numéro de
+la version restaurée).
+
 
 ****************************
 ** Gestion des FK
@@ -69,26 +87,30 @@ actif pourrait modifier (supprimer !) l'historique, et que l'on mélangerait
 la manipulation d'objets historisés avec celle d'objets actifs.
 
 Le comportement retenu est donc le suivant :
-	* Si l'objet référencé est historisé, c'est l'objet historisé qui est 
-	  référencé
+	* Si l'objet référencé est historisé, c'est l'essence de l'objet historisé
+	  qui est référencé
 	* Sinon, le champ de type FK est ignoré et non historisé
 
 Attention, cela peut avoir de lourdes conséquences, notamment si vous cherchez
 à restaurer un objet : les FK vers des objets non historisés ne seront pas 
 restaurées (elles garderont leur valeur d'avant restauration, ou, si l'objet 
 actif avait été supprimé, il vous reste à prier que le champ FK n'était pas
-obligatoire) 
+obligatoire).
 
 La restauration d'une FK historisée fait pointer la FK vers la version active
 de l'objet référencé. Cela n'entraine donc PAS de restauration automatique de
 l'objet référencé. Cela reste à votre charge. Si l'objet référencé n'est plus 
-actif, cela entraine une exception.
+actif, cela lève une exception.
 
 
 ****************************
-**Gestion des M2M (sans intermédiaires)
+** Gestion des M2M
 ****************************
 
+Les M2M sans intermédiaire sont gérées de la même façon que les FK.
+
+Les M2M avec intermédiaire ne sont pas gérées en elles-mêmes. 
+Un contournement possible est d'historiser le modèle intermédiaire.
 
 
 ===================================
@@ -123,7 +145,7 @@ Dans ce cas, seul un changement d'âge provoquera un changement de version.
 
 Limitations :
 un modèle utilisant l'historisation ne peut comporter de champs nommés :
-* *_history
+* history_*
 * xxx
 * propriétés current_version (integer), all_versions (queryset)
 
@@ -143,6 +165,7 @@ Notes :
 
 Eléments ajoutés au modèle suivi :
 * attribut current_version (entier naturel)
+* attribut current_avatar
 * attribut version_set (queryset contenant toutes les version successives de
   l'objet dans l'ordre, y compris la version en cours)
 * dans la sous-classe _meta du modèle, est ajouté un champ "history_model"
@@ -165,7 +188,6 @@ Objet historique lui-même :
 
 ATTENTION : en aucun cas il ne faut faire d'update sur un objet historique.
 Non que ça ne marche pas, c'est juste abérrant.
-=> Faut-il chercher à l'interdire vraiment ? C'est assez facile...
 
 
 Requête sur un objet particulier.
@@ -199,8 +221,6 @@ Ces vues sont :
 ===================================
 
 Purges ? Pourquoi pas JAMAIS ?
-Liens : faut-il pointer vers les objets rééls ou vers les objets archivés ? 
-		Que faire si les objets cible ne sont pas eux-mêmes archivés ?
 Est-ce une bonne chose d'avoir les informations de suivi (date, numéro de
 version) directement dans le modèle historique ?		
 Si vous avez des idées de vues génériques ou autres...
@@ -257,7 +277,7 @@ se faisant via les classes filles.
   tous les objets du niveau sont restaurés
 
 * Fonction : Historized_object.revert_to(version)
-  l'objet est rétabli dans sa version 'version'
+  l'objet est rétabli dans sa version 'version' (numérique)
 
 * Attribut : Historized_object.diff_prev
   renvoie un objet ModelDiff contenant les différences avec la version 
