@@ -144,14 +144,20 @@ def before_delete_event_handler(sender, instance, **kwargs):
     if not history_model:
         raise NoHistoryModel(instance)
     
-    ## Current version
+    ## Deleted version
     version = instance.current_version + 1
+    avatar = instance.current_avatar
     
-    ## Create a new history object with the data
-    __copy_object(instance, 'delete', version, u'destruction sans commentaire')
-    
-    ## Remove all history FK
+    ## Reference the deletion and link it to the latest avatar of the object
+    ho = instance._meta.history_model(history_action = 'delete',
+                                     history_version = version, 
+                                     history_comment = u'destruction sans commentaire',
+                                     history_active_object = None,
+                                     history_linked_to_version = avatar,
+                                     essence = avatar.essence)
+    ho.save()
+  
+    ## Remove all history FK, so that the deletion won't delete the avatars
     for history_object in instance.version_set.all():
         history_object.history_active_object = None
         history_object.save()
-    
