@@ -9,6 +9,8 @@
     @license: GNU GPL v3
 """
 
+from exceptions import *
+
 def _getCurrentVersion(object):
     return object.version_set.latest('history_datetime').history_version
 
@@ -17,6 +19,7 @@ def _getCurrentVersionObject(object):
 
 def _getObjectEssence(monitored_object):
     return monitored_object.version_set.all()[0].essence
+
 
 class ModelDiff:
     def __init__(self, reference, object):
@@ -109,62 +112,3 @@ def _diffWithCurrentVersion(instance):
     except:
         raise Exception('objet jamais sauvegarde')
     return ModelDiff(current_saved_object, instance)
-
-
-def _revert_to(history_object):
-    """
-        Main restoration function.
-        
-        Restores an history_object into the active objects.
-        If the object is still active, it is updated.
-        If the object has been deleted, it is recreated.
-        
-        @param history_object: the log to restore.
-    """  
-    ## Object to restore
-    if not history_object.history_active_object:
-        instance = history_object.historized_model()
-    else:
-        instance = history_object.history_active_object
-    
-    ## Normal fields restoration
-    for field in history_object._meta.fields:
-        ## Check this is a field from the original model
-        try:
-            if not field.history_field:
-                continue
-        except AttributeError:
-            continue
-        
-        ## Copy the value
-        setattr(instance, field.name, getattr(history_object, field.value))
-    instance.save()
-    
-    #TODO: M2M & FK restoration
-    
-    ## Log the restoration
-    new_version =  instance.current_version_object
-    new_version.history_comment = 'restauration de l\'objet en version %s' %history_object.history_version
-    new_version.history_linked_to_version = history_object
-    new_version.save() 
-
-
-def _revert_instance_to_version(instance, version):
-    """
-        Helper function for restoring a perticular version of an existing object.
-        Calls _revert_to.
-       
-        @param instance: the versionned object subect to restoration
-        @param version: the version (either an integer or an history object) to restore
-       
-        @see: _revert_to
-    """
-    history_object = version
-    if isinstance(version, 'int'):
-        history_object = instance.version_set.get(history_version = version)
-    
-    if not isinstance(history_object, instance._meta.history_model):
-        raise Exception('la version specifiee n est pas du bon type')
-    
-    _revert_to(history_object)
-    

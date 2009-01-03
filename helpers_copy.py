@@ -8,17 +8,16 @@
     @license: GNU GPL v3
 """
 
-from models import Essence
+from django.db import models
+
+class Essence(models.Model):
+    """Clearly not at the right place"""
+    def __unicode__(self):
+        return u'objet %s' %self.id
+
 
 def _copy_object(original, action_code, version, comment):
     """factorization of common copy code for all signal handlers"""
-    ## Check it is not a "blank" save
-    try:
-        if action_code != 'delete' and not original.modifications.is_modified():
-            return
-    except:
-        pass # first save
-    
     ## Create HO object
     ho = original._meta.history_model(history_action = action_code,
                                      history_version = version, 

@@ -38,6 +38,12 @@ def __instance_should_be_historised(instance):
             return False
     except AttributeError:
         pass
+    ## Check it is not a "blank" save
+    try:
+        if not original.modifications.is_modified():
+            return False
+    except:
+        pass # first save
     return True
 
 

@@ -25,7 +25,8 @@ import django.dispatch
 ## Hist imports
 from exceptions import *
 #from handlers import before_save_event_handler, after_save_event_handler, before_delete_event_handler
-from helpers import _getCurrentVersion, _diffWithPreviousVersion, _getCurrentVersionObject, _revert_instance_to_version, _getObjectEssence, _diffWithCurrentVersion
+from helpers import _getCurrentVersion, _diffWithPreviousVersion, _getCurrentVersionObject, _getObjectEssence, _diffWithCurrentVersion
+from helpers_revert import _revert_instance_to_version, _revert_latest_commit
 
 
 
@@ -118,9 +119,10 @@ class HistoryModelBase(ModelBase):
             spied_model.modifications = property(_diffWithCurrentVersion)
             
             ## Add helper functions to the spied upon object
-            spied_model.revert_to = _revert_instance_to_version
+            spied_model.history_revert_to = _revert_instance_to_version
+            spied_model.history_cancel_latest_commit = _revert_latest_commit
             
-            ## delete overload, but we must take into account an optional overload by the user himself
+            ## Delete overload, but we must take into account an optional overload by the user himself
             spied_model.history_delete = spied_model.delete  
             def delete(self):
                 ready_to_delete.send(sender = spied_model, instance=self)
@@ -136,10 +138,7 @@ class HistoryModelBase(ModelBase):
 ## History base objects
 ###############################################################################
 
-class Essence(models.Model):
-    def __unicode__(self):
-        return u'objet %s' %self.id
-
+from helpers_copy import Essence  ## Very ugly
 
 class Avatar(models.Model):
     """

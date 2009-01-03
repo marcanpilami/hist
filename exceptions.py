@@ -26,4 +26,11 @@ class NoHistoryModel(HistoryException):
         self.instance = instance
     def __str__(self):
         return 'L\'objet %s n\'est pas suivi en modifications' %self.instance
+
+class UnknownVersion(HistoryException):
+    def __init__(self, instance, version):
+        self.instance = instance
+        self.version = version
+    def __str__(self):
+        return 'L\'objet %s n\'a pas de version %s' %(self.instance, self.version)
     
