@@ -15,8 +15,8 @@ def _getCurrentVersion(object):
 def _getCurrentVersionObject(object):
     return object.version_set.latest('history_datetime')
 
-def _getObjectAvatar(object):
-    return object.version_set.latest('history_datetime').essence
+def _getObjectEssence(monitored_object):
+    return monitored_object.version_set.all()[0].essence
 
 class ModelDiff:
     def __init__(self, reference, object):

@@ -25,7 +25,7 @@ import django.dispatch
 ## Hist imports
 from exceptions import *
 #from handlers import before_save_event_handler, after_save_event_handler, before_delete_event_handler
-from helpers import _getCurrentVersion, _diffWithPreviousVersion, _getCurrentVersionObject, _revert_instance_to_version, _getObjectAvatar, _diffWithCurrentVersion
+from helpers import _getCurrentVersion, _diffWithPreviousVersion, _getCurrentVersionObject, _revert_instance_to_version, _getObjectEssence, _diffWithCurrentVersion
 
 
 
@@ -114,7 +114,7 @@ class HistoryModelBase(ModelBase):
             ## Add attributes to the spied upon object
             spied_model.current_version = property(_getCurrentVersion)
             spied_model.current_avatar = property(_getCurrentVersionObject)
-            spied_model.essence = property(_getObjectAvatar)
+            spied_model.essence = property(_getObjectEssence)
             spied_model.modifications = property(_diffWithCurrentVersion)
             
             ## Add helper functions to the spied upon object
