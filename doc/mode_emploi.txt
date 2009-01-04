@@ -1,4 +1,8 @@
-Module d'historisation des modifications d'objets
+History module for Django
+User manual
+===============================================================================
+
+This document is a DRAFT and is in French for now, sorry...
 
 Auteur					: Marc-Antoine Gouillart
 Mail					: mag@newarch.fr
@@ -74,6 +78,8 @@ Une nouvelle version est créée à chaque appel de save() (en création ou
 modification) ou de delete().
 A chaque fois, l'objet suivi est entièrement copié dans une table 
 d'historisation. 
+Il n'y a donc pas de notion de "commit" dans hist. Ou bien, on peut considérer
+qu'un save() équivaut à un commit.
 
 La restauration d'une version donnée est considérée comme un commit en soi, et
 donc incrémente le numéro de version de l'objet (on ne reprend pas le numéro de
@@ -201,6 +207,25 @@ Diffeur.
 Revenir en arrière.
 
 
+
+===================================
+== Restauration
+===================================
+
+* objet_historise.history_revert_to(numero_de_version)
+* objet_historise.history_cancel_latest_commit()
+
+La restauration est l'acte d'ecraser les valeurs d'un objet historisé par les
+valeurs d'un de ses avatars.
+Il s'agit bien de toutes les valeurs historisées. Les champs non historisées
+ne sont bien entendu pas modifiés. 
+Attention, None (ou []) est toujours considéré comme une valeur significative.
+
+Pour appliquer un avatar d'une certaine essence sur un objet historisé dépendant
+d'une autre essence, voir la fonction 'merge' du §branches.
+
+
+
 ===================================
 == Tags
 ===================================
@@ -223,11 +248,13 @@ lancée.
 == Branches
 ===================================
 
-Pour créer une branche, il faut utiliser la méthode fork() d'un avatar ou d'un
-objet suivi.
-Cela créé une copie de l'avatar (si vous utilisez objet.fork et non 
-avatar.fork, c'est toujours l'avatar en cours et non l'objet suivi qui est 
-copié).
+* Créer
+****************
+Pour créer une branche, il faut utiliser la méthode history_fork() d'un avatar
+ou d'un objet suivi.
+Cela créé une copie de l'avatar (si vous utilisez objet.history_fork et non 
+avatar.history_fork, c'est toujours l'avatar en cours et non l'objet suivi qui 
+est copié).
 
 Note : si l'objet forké est encore actif, et qu'il y a des contraintes d'unicité
 sur certains champs renseignés, le fork échouera de façon certaine !
@@ -235,9 +262,16 @@ sur certains champs renseignés, le fork échouera de façon certaine !
 En arrière plan, hist créé une nouvelle essence, et retient que l'objet vient 
 d'un fork.
 
-Il n'y a pas de "merge", ce qui n'aurait pas beaucoup de sens dans l'absolu.
-A l'étude néanmoins : pouvoir appliquer un avatar sur un objet actif, en 
-remplaçant l'ensemble des valeurs...
+* Joindre
+****************
+Il existe aussi une fonction de "merge" extrèmement limitée : 
+objet_suivi.fork(avatar_autre_essence)
+Dans ce cas, toutes les valeurs de l'objet suivi sont ecrasées par celles de 
+l'avatar (hist utilise alors le même mécanisme que pour la restauration).
+
+A noter que hist se moque de l'origine de l'avatar, qui peut aussi bien provenir
+d'un fork que d'une branche totalement sans rapport.
+
 
 
 ===================================
@@ -254,6 +288,7 @@ Ces vues sont :
 * Liste de toutes les versions recensées de tous les objets, y compris les
   objets supprimés.
 * Liste des niveaux
+* Détail des champs d'un avatar
 
 
 

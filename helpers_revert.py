@@ -2,6 +2,7 @@
 
 """
     Private functions for the hist application. 
+    These functions deal with everything related to applying a save (revert, fork, merge)
     These functions are not part of the API.
     
     @author: Marc-Antoine Gouillart
@@ -14,7 +15,7 @@ from helpers_copy import _copy_object, _is_history_field
 import graph
 
 
-def _revert_to(avatar, fork = False):
+def _revert_to(avatar, fork = False , merge = None):
     """
         Main restoration function.
         
@@ -25,9 +26,16 @@ def _revert_to(avatar, fork = False):
         @raise DeletedObject: if a referenced object (FK, M2M) doesn't exist any more and hence prevents restoration.
         @param avatar: the archive to restore.
         @param fork: set to True to create a new object, unrelated to the copied target essence. 
-    """  
+        @param merge:  an object instance with which the avatar should be merged. 
+        @note: if 'fork' is True, then 'merge' is ignored. 
+    """
     ## Target instance
-    if not avatar.history_active_object or fork:
+    if fork:
+        instance = avatar.historized_model()
+    elif merge:
+        instance = merge
+        #TODO: test same model as avatar
+    elif not avatar.history_active_object:
         instance = avatar.historized_model()
     else:
         instance = avatar.history_active_object
@@ -80,16 +88,18 @@ def _revert_to(avatar, fork = False):
     
     
     ## Restore the links to active objects in all avatars
-    if not avatar.history_active_object and not fork:
+    if not avatar.history_active_object and not fork and not merge:
         for av in avatar.essence.avatar_set.all():
             avc = av.history_final_type
             avc.history_active_object = instance
             avc.save()
     
     
-    ## Log the restoration
+    ## Log the operation
     if fork:
         ho = _copy_object(instance, 'create', 0, u'fork de la version %s de l\'essence %s' %(avatar.history_version, avatar.essence.id))
+    elif merge:
+        ho = _copy_object(instance, 'merge', instance.current_version + 1, u'merge avec la version %s de l\'essence %s' %(avatar.history_version, avatar.essence.id))
     else:
         ho = _copy_object(instance, 'restoration', instance.current_version + 1, u'restauration de la version %s' %avatar.history_version)
     ho.history_linked_to_version = avatar
@@ -142,6 +152,15 @@ def _fork(object):
     return _revert_to(object, True)
 
 
+def _merge(object_instance, avatar):
+    """
+        The content of 'avatar' will be merged into the 'object_instance' 
+        (one new commit).
+        @param object_instance: the instance that will receive the new data
+        @param avatar: the source of the merged data
+    """
+    return _revert_to(avatar, False, object_instance)
+    
 
 def _load_tag(self):
         """
