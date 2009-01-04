@@ -56,10 +56,7 @@ def _revert_to(avatar, fork = False , merge = None):
             if not ess: continue
             
             ## This essence should still have active object, else this triggers an exception
-            value = ess.avatar_set.all()[0].history_final_type.history_active_object
-            
-            ## Set the value
-            setattr(instance, field.name, ao)
+            value = ess.avatar_set.all()[0].history_model.history_active_object
         
         ## Normal field handling
         else:
