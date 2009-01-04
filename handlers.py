@@ -72,12 +72,6 @@ def before_save_event_handler(sender, instance, **kwargs):
     ## Check it is an update and not a creation
     if not instance.id:
         return
-         
-    ## Get original object
-    original = sender.objects.get(pk=instance.id)
- 
-    ## Check the object has really changed (not a "blank" call to save())
-    #TODO: write this part (consider fields list)
     
     ## Current version
     version = instance.current_version + 1
