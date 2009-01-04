@@ -1,7 +1,7 @@
 #coding: UTF-8
 
 """
-    History module.
+    History module models and metamodels
     
     @author: Marc-Antoine Gouillart
     @copyright: Marc-Antoine Gouillart, 2009
@@ -196,9 +196,6 @@ class HistoryModel(Avatar):
         ordering = ['history_version',]
         
     diff_prev = property(_diffWithPreviousVersion)
-
-
-#TODO: redirect M2M history to historized objects rather than the active one ?
 
 
 
