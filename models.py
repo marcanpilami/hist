@@ -26,7 +26,7 @@ import django.dispatch
 from exceptions import *
 #from handlers import before_save_event_handler, after_save_event_handler, before_delete_event_handler
 from helpers import _getCurrentVersion, _diffWithPreviousVersion, _getCurrentVersionObject, _getObjectEssence, _diffWithCurrentVersion
-from helpers_revert import _revert_instance_to_version, _revert_latest_commit, _fork
+from helpers_revert import _revert_instance_to_version, _revert_latest_commit, _fork, _load_tag
 
 
 
@@ -204,14 +204,14 @@ class HistoryModel(Avatar):
 ###############################################################################
 
 class LevelManager(models.Manager):
-    def snap(self):
+    def snap(self, comment = u'Default comment'):
         """
             Creates a tag from all versionned objects in the db.
             @note: this function hits the database very hard.
             @return: the new Level object
         """
         ## Create new level
-        l = Level(comment = u'magnifique niveau de version')
+        l = Level(comment = comment)
         l.save()
         
         for ct in ContentType.objects.all():
@@ -238,4 +238,5 @@ class Level(models.Model):
     versionned_objects = models.ManyToManyField(Avatar, related_name = 'history_level_set') 
     
     objects = LevelManager()
-    
+    load = _load_tag     
+

@@ -53,6 +53,8 @@ simple.
 * Un objet historisé peut avoir eu plusieurs versions appelées "avatar".
 * Les différents avatars ne sont pas relatifs à l'objet historisé (car il
   évolue au cours du temps, voir peut disparaitre), mais à son "essence".
+* Une essence, un avatar qui correspondent à un objet historisé (i.e. l'objet
+  historisé n'a pas été effacé) est dit "actif".
 
 On peut aussi voir les choses ainsi : l'âme d'un objet est immortelle, et 
 s'incarne successivement dans des avatars. 
@@ -111,6 +113,7 @@ Les M2M sans intermédiaire sont gérées de la même façon que les FK.
 
 Les M2M avec intermédiaire ne sont pas gérées en elles-mêmes. 
 Un contournement possible est d'historiser le modèle intermédiaire.
+
 
 
 ===================================
@@ -198,6 +201,44 @@ Diffeur.
 Revenir en arrière.
 
 
+===================================
+== Tags
+===================================
+
+La restauration de niveaux de version recquière le module python-graph.
+
+Pour prendre un tag : Level.objects.snap()
+
+Pour restaurer un tag : tag_instance.load()
+La restauration tente de faire un tri topologique du graphe des dépendances
+des objets à restaurer puis les restaure dans cet ordre (avec les mêmes 
+limitations que pour la restauration simple).
+
+Si le graphe comporte des cycles, la restauration échoue et une exception est
+lancée.
+
+
+
+===================================
+== Branches
+===================================
+
+Pour créer une branche, il faut utiliser la méthode fork() d'un avatar ou d'un
+objet suivi.
+Cela créé une copie de l'avatar (si vous utilisez objet.fork et non 
+avatar.fork, c'est toujours l'avatar en cours et non l'objet suivi qui est 
+copié).
+
+Note : si l'objet forké est encore actif, et qu'il y a des contraintes d'unicité
+sur certains champs renseignés, le fork échouera de façon certaine !
+
+En arrière plan, hist créé une nouvelle essence, et retient que l'objet vient 
+d'un fork.
+
+Il n'y a pas de "merge", ce qui n'aurait pas beaucoup de sens dans l'absolu.
+A l'étude néanmoins : pouvoir appliquer un avatar sur un objet actif, en 
+remplaçant l'ensemble des valeurs...
+
 
 ===================================
 == Vues
@@ -213,6 +254,19 @@ Ces vues sont :
 * Liste de toutes les versions recensées de tous les objets, y compris les
   objets supprimés.
 * Liste des niveaux
+
+
+
+===================================
+== Récapitulatif des limitations imposées au modèle initial
+===================================
+
+Les modèles ne doivent pas comporter de champ nommé history_xxxx. C'est là la
+limitation la plus ennuyeuse.
+
+Si utilisation de la restauration globale de niveau, les modèles sauvegardés 
+doivent être acycliques. (sauf cas très particulier, c'est une bonne pratique
+générale, et donc une limitation acceptable)
 
 
 

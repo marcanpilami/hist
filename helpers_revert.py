@@ -11,6 +11,7 @@
 
 from exceptions import *
 from helpers_copy import _copy_object, _is_history_field
+import graph
 
 
 def _revert_to(avatar, fork = False):
@@ -139,5 +140,55 @@ def _fork(object):
     
     ## It may be an avatar
     return _revert_to(object, True)
-     
+
+
+
+def _load_tag(self):
+        """
+            Loads a level. All active objects are updated, missing objects are created.
+        """        
+        
+        ## Build a graph with all relationships betwen objects, then do a topological sort
+        di = graph.digraph()
+        for av in self.versionned_objects.all():
+            avatar = av.history_model
+            
+            ## Add the node to the graph
+            if not di.has_node(avatar.essence.id):      ## It may have been created before through a relationship
+                di.add_node(avatar.essence.id)
+            
+            ## Add edges towards linked objects
+            for field in avatar._meta.fields + avatar._meta.many_to_many:
+                # Check this field is an historised relationship
+                if field.__class__.__name__ != 'ManyToManyField' and field.__class__.__name__ != 'ForeignKey':
+                    continue
+                try:
+                    if not field.history_field:
+                        continue
+                except AttributeError:
+                    continue
+                
+                # Extract target essences
+                if field.__class__.__name__ == 'ManyToManyField':
+                    target_essences = getattr(avatar, field.name).all()  
+                if field.__class__.__name__ == 'ForeignKey':
+                    target_essences = [getattr(avatar, field.name),]
+                    if target_essences[0] == None:
+                        target_essences = []
+                
+                # Add edges 
+                for essence in target_essences:
+                    ## Add the target node to the graph if it doesn't already exist
+                    if not di.has_node(essence.id):
+                        di.add_node(essence.id)
+                    
+                    ## Add the edge
+                    di.add_edge(essence.id, avatar.essence.id)
+        
+        id_list = di.topological_sorting()      
+        
+        ## Restore the objects in the computed order
+        for essence_id in id_list:
+            avatar = self.versionned_objects.get(essence__id = essence_id).history_model
+            _revert_to(avatar)    
     
