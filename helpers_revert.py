@@ -64,7 +64,12 @@ def _revert_to(avatar, fork = False):
     m2m = {}
     # Step 1 : check all the targets still exist, before saving the new/modified instance.
     for field in avatar._meta.many_to_many:
-        m2m[field.name] = [ess.avatar_set.all()[0].history_final_type.history_active_object for ess in getattr(avatar, field.name).all()]
+        ## Check this is a field from the original model
+        if not _is_history_field(field):
+            continue
+
+        ## Look for target
+        m2m[field.name] = [ess.avatar_set.all()[0].history_model.history_active_object for ess in getattr(avatar, field.name).all()]
     
     # Step 2 : we're sure it will work, so save it all and reference the values
     instance.save()
