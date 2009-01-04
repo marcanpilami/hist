@@ -123,8 +123,12 @@ Un contournement possible est d'historiser le modèle intermédiaire.
 
 
 ===================================
-== Comment utiliser le module (pour les créateurs d'applications)
+== Utilisation
 ===================================
+
+****************************
+** Mise en place du suivi
+****************************
 
 Le mode opératoire est inspiré de celui associé à l'interface d'administration.
 Pour chaque modèle que l'on choisit de suivre en version, il suffit de joindre
@@ -152,13 +156,6 @@ class MarsuHistory(HistoryModel):
 Dans ce cas, seul un changement d'âge provoquera un changement de version.
 
 
-Limitations :
-un modèle utilisant l'historisation ne peut comporter de champs nommés :
-* history_*
-* xxx
-* propriétés current_version (integer), all_versions (queryset)
-
-
 Notes :
 * les tables et objets d'historisation appartienent à l'application initiale,
   pas à l'application hist. Elles sont donc nettoyées comme les autres lors
@@ -167,10 +164,9 @@ Notes :
   suivi il faut aussi rajouter des colonnes aux tables d'historisation !
 
 
-
-===================================
-== Comment exploiter l'historique
-===================================
+****************************
+** Eléments à répartir dans les section suivantes
+****************************
 
 Eléments ajoutés au modèle suivi :
 * attribut current_version (entier naturel)
@@ -202,15 +198,34 @@ Non que ça ne marche pas, c'est juste abérrant.
 Requête sur un objet particulier.
 Tous les objets d'un niveau de version donné.
 Attention, faire du transactionnel.
-Vue donnant l'historique d'un objet. (avec les diffs)
-Diffeur.
-Revenir en arrière.
 
 
+****************************
+** Diffs
+****************************
 
-===================================
-== Restauration
-===================================
+Hist vient avec un générateur de diff sommaire.
+
+C'est le rôle de la classe ModelDiff. Son constructeur prend en paramètres 2
+avatars, ou deux objets historisés, ou toute combinaison des deux.
+
+Cette classe contient en particulier un champ 'dict',qui contient les 
+différences entre deux versions sur le modèle :
+{'nom_du_champ':[avant, après]}
+
+Son __unicode__ renvoit une chaîne décrivant toutes les modifications.
+
+Note : les champs à valeurs multiples (M2M) sont traités comme des listes.
+
+Un accelérateur a été ajouté aux objets historisés pour donner les modifications
+non sauvegardées :
+objet_historise.modifications
+De même, tout avatar aura une propriété diff_prev.
+
+
+****************************
+** Restauration
+****************************
 
 * objet_historise.history_revert_to(numero_de_version)
 * objet_historise.history_cancel_latest_commit()
@@ -225,10 +240,9 @@ Pour appliquer un avatar d'une certaine essence sur un objet historisé dépenda
 d'une autre essence, voir la fonction 'merge' du §branches.
 
 
-
-===================================
-== Tags
-===================================
+****************************
+** Tags
+****************************
 
 La restauration de niveaux de version recquière le module python-graph.
 
@@ -243,10 +257,9 @@ Si le graphe comporte des cycles, la restauration échoue et une exception est
 lancée.
 
 
-
-===================================
-== Branches
-===================================
+****************************
+** Branches
+****************************
 
 * Créer
 ****************
@@ -273,10 +286,9 @@ A noter que hist se moque de l'origine de l'avatar, qui peut aussi bien provenir
 d'un fork que d'une branche totalement sans rapport.
 
 
-
-===================================
-== Vues
-===================================
+****************************
+** Vues
+****************************
 
 L'application est livrée avec des vues et les templates minimaux correspondant.
 
@@ -292,9 +304,9 @@ Ces vues sont :
 
 
 
-===================================
-== Récapitulatif des limitations imposées au modèle initial
-===================================
+****************************
+** Récapitulatif des limitations imposées au modèle initial
+****************************
 
 Les modèles ne doivent pas comporter de champ nommé history_xxxx. C'est là la
 limitation la plus ennuyeuse.

@@ -93,14 +93,17 @@ def _revert_to(avatar, fork = False , merge = None):
     
     
     ## Log the operation
-    if fork:
-        ho = _copy_object(instance, 'create', 0, u'fork de la version %s de l\'essence %s' %(avatar.history_version, avatar.essence.id))
-    elif merge:
-        ho = _copy_object(instance, 'merge', instance.current_version + 1, u'merge avec la version %s de l\'essence %s' %(avatar.history_version, avatar.essence.id))
-    else:
-        ho = _copy_object(instance, 'restoration', instance.current_version + 1, u'restauration de la version %s' %avatar.history_version)
-    ho.history_linked_to_version = avatar
-    ho.save()
+    try:
+        if fork:
+            ho = _copy_object(instance, 'create', 0, u'fork de la version %s de l\'essence %s' %(avatar.history_version, avatar.essence.id))
+        elif merge:
+            ho = _copy_object(instance, 'merge', instance.current_version + 1, u'merge avec la version %s de l\'essence %s' %(avatar.history_version, avatar.essence.id))
+        else:
+            ho = _copy_object(instance, 'restoration', instance.current_version + 1, u'restauration de la version %s' %avatar.history_version)
+        ho.history_linked_to_version = avatar
+        ho.save()
+    except WontCopy:
+        pass
     
     ## Re-enable hist
     instance._meta.history_disabled = False

@@ -38,14 +38,14 @@ def __instance_should_be_historised(instance):
             return False
     except AttributeError:
         pass
-    ## Check it is not a "blank" save
-    try:
-        if not original.modifications.is_modified():
-            return False
-    except:
-        pass # first save
     return True
 
+
+def __silent_copy(original, action_code, version, comment):
+    try:
+        _copy_object(original, action_code, version, comment)
+    except WontCopy:
+        pass
 
 def after_save_event_handler(sender, instance, **kwargs):
     """Signal handler for creations"""
@@ -58,7 +58,7 @@ def after_save_event_handler(sender, instance, **kwargs):
     try:
         instance.current_version
     except:
-        _copy_object(instance, 'creation', 0, u'création de l\'objet')
+        __silent_copy(instance, 'creation', 0, u'création de l\'objet')
 
 
 
@@ -77,7 +77,7 @@ def before_save_event_handler(sender, instance, **kwargs):
     version = instance.current_version + 1
     
     ## Create a new history object with the data
-    _copy_object(instance, 'update', version, u'mise à jour sans commentaire')
+    __silent_copy(instance, 'update', version, u'mise à jour sans commentaire')
 
 
 

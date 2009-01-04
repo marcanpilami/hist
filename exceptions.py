@@ -34,3 +34,15 @@ class UnknownVersion(HistoryException):
     def __str__(self):
         return 'L\'objet %s n\'a pas de version %s' %(self.instance, self.version)
     
+
+class UndiffableObject(HistoryException):
+    def __init__(self, instance):
+        self.instance = instance
+    def __str__(self):
+        return 'L\'objet %s n\'est pas diffable (non encore sauvegarde ou non suivi en version)' %self.instance
+
+
+class WontCopy(HistoryException):
+    def __str__(self):
+        return u'Ne sera pas copie'
+    

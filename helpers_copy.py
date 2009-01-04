@@ -9,6 +9,7 @@
 """
 
 from django.db import models
+from exceptions import *
 
 class Essence(models.Model):
     """Clearly not at the right place"""
@@ -27,6 +28,13 @@ def _is_history_field(field):
 
 def _copy_object(original, action_code, version, comment):
     """factorization of common copy code for all signal handlers"""
+    ## Check it is not a "blank" save
+    try:
+        if not original.modifications.is_modified():
+            raise WontCopy()
+    except UndiffableObject:
+        pass # first save, it's OK
+    
     ## Create HO object
     ho = original._meta.history_model(history_action = action_code,
                                      history_version = version, 

@@ -29,16 +29,10 @@ class ModelDiff:
             Constructor for the ModelDiff class.
             
             @param reference: the reference object (Avatar or instance of an historised model)
-            @param object: the object to compare (same class as the 'reference' parametre)
+            @param object: the object to compare
         """
         self.dict = {}
-        try:
-            reference.history_model # replaces the test: isinstance(reference, Avatar)
-        except AttributeError:
-            ## no history_model means this is not an avatar
-            self.__diffInstances(reference, object)
-            return
-        self.__diffAvatars(reference, object)
+        self.__diff(reference, object)
     
     def is_modified(self):
         return self.dict.__len__() != 0
@@ -49,54 +43,52 @@ class ModelDiff:
             res += u'Le champ "%s" est passé de "%s" à "%s". ' %(key, self.dict[key][0], self.dict[key][1])
         return res
 
-    def __diffAvatars(self, av1, av2):
-        """
-            Compares two avatars, and completes self data
-        """        
-        ## Tests
-        if (not isinstance(av2, av1.__class__)) and (not isinstance(av1, av2.__class__)):
-            raise Exception('Impossible de comparer des objets de classes differentes')
-        
+    def __diff(self, o1, o2):
+        ## Get field list
+        try:
+            o1.history_model    # only HM (ie avatars) have a history_model
+            fields = o1._meta.fields + o1._meta.many_to_many
+        except AttributeError:
+            ## no history_model means this is not an avatar, so it *should* be an object instance
+            try:
+                fields = o1.current_avatar._meta.fields + o1.current_avatar._meta.many_to_many
+            except:
+                raise UndiffableObject(o1)
+         
+        ## Filter the fields
+        f2 = []
+        for f in fields:
+            if _is_history_field(f):
+                f2.append(f) 
+           
         ## Compare fields
-        for field in av1._meta.fields + av1._meta.many_to_many:
-            ## Check this is a field from the original model
-            if not _is_history_field(field):
-                continue
-            
+        for field in f2:
             ## Compare values
-            val_1 = getattr(av1, field.name)
-            val_2 = getattr(av2, field.name)
+            val_1 = getattr(o1, field.name)
+            val_2 = getattr(o2, field.name)
             
-            if field.__class__.__name__ != 'ManyToManyField' and val_1 != val_2:
-                self.dict[field.name] = [val_1, val_2]
-            elif field.__class__.__name__ == 'ManyToManyField':
-                l1 = [object for object in val_1.all().order_by('avatar')]
-                l2 = [object for object in val_2.all().order_by('avatar')]
+            if field.__class__.__name__ == 'ForeignKey': 
+                if val_1 and val_1.__class__.__name__ != 'Essence':
+                    val_1 = val_1.essence
+                if val_2 and val_2.__class__.__name__ != 'Essence':
+                    val_2 = val_2.essence   
+                if val_1 != val_2:
+                    self.dict[field.name] = [val_1, val_2]
+            elif field.__class__.__name__ == 'ManyToManyField':             
+                l1 = [essence for essence in val_1.all()]
+                for ess in l1:
+                    if ess.__class__.__name__ != 'Essence':
+                        l1.remove(ess)
+                        l1.append(ess.essence)
+                l2 = [essence for essence in val_2.all()]
+                for ess in l2:
+                    if ess.__class__.__name__ != 'Essence':
+                        l2.remove(ess)
+                        l2.append(ess.essence)
                 if l1 != l2:
                     self.dict[field.name] = [l1, l2]
-
-
-    def __diffInstances(self, av1, av2):
-        """
-            Compares two instances, and completes self data
-        """
-        ## Tests
-        if (not isinstance(av2, av1.__class__)) and (not isinstance(av1, av2.__class__)):
-            raise Exception('Impossible de comparer des objets de classes differentes')
-        
-        ## Compare fields
-        for field in av1._meta.fields + av1._meta.many_to_many:
-            ## Compare values
-            val_1 = getattr(av1, field.name)
-            val_2 = getattr(av2, field.name)
-            
-            if field.__class__.__name__ != 'ManyToManyField' and val_1 != val_2:
+            elif val_1 != val_2:
                 self.dict[field.name] = [val_1, val_2]
-            elif field.__class__.__name__ == 'ManyToManyField':
-                l1 = [object for object in val_1.all().order_by('id')]
-                l2 = [object for object in val_2.all().order_by('id')]
-                if l1 != l2:
-                    self.dict[field.name] = [l1, l2]
 
 
 def _diffWithPreviousVersion(avatar):
@@ -107,7 +99,7 @@ def _diffWithPreviousVersion(avatar):
 
 def _diffWithCurrentVersion(instance):
     try:
-        current_saved_object = instance.current_avatar.history_active_object
+        current_saved_object = instance.current_avatar
     except:
-        raise Exception('objet jamais sauvegarde')
+        raise UndiffableObject(instance)
     return ModelDiff(current_saved_object, instance)
