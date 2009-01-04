@@ -66,14 +66,9 @@ def _copy_object(original, action_code, version, comment):
         try: 
             # Try/catch is to check whether the target model is historized or not (or if there is nothing to historise)
             if getattr(original, mm.name).all()[0]._meta.history_model:
-                print 'ici'
-                print getattr(original, mm.name).all() 
                 m2m_manager = getattr(ho, mm.name)
                 for essence in [ ess.current_avatar.essence for ess in getattr(original, mm.name).all() ]:
-                    print essence
                     m2m_manager.add(essence)
-                print getattr(ho, mm.name).all()
-                print 'fin'
                 continue
             else:
                 continue ## The target object is not (yet) historised
