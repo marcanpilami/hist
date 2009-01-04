@@ -10,6 +10,8 @@
 """
 
 from exceptions import *
+from helpers_copy import _is_history_field
+
 
 def _getCurrentVersion(object):
     return object.version_set.latest('history_datetime').history_version
@@ -58,10 +60,7 @@ class ModelDiff:
         ## Compare fields
         for field in av1._meta.fields + av1._meta.many_to_many:
             ## Check this is a field from the original model
-            try:
-                if not field.history_field:
-                    continue
-            except AttributeError:
+            if not _is_history_field(field):
                 continue
             
             ## Compare values

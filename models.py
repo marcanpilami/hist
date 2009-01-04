@@ -47,14 +47,23 @@ class HistoryModelBase(ModelBase):
         new_class = ModelBase.__new__(cls, name, bases, dct)
 
         if 'historized_model' in dct:
-            ## Retrive the spied upon model
+            ## Retrieve the spied upon model
             spied_model = dct['historized_model']
+            
+            try:
+                field_list = dct['history_fields']
+            except:
+                field_list = None
             
             ## Register the model used for historisation into the spied-upon model's Meta class. 
             spied_model._meta.history_model = new_class
             
             ## Copy basic fields
             for field in spied_model._meta.fields:     
+                ## Check this field should be historised
+                if field_list and not field.name in field_list:
+                    continue
+                
                 ## PK handling
                 if field.primary_key:  
                     _field = copy.copy(field)
@@ -91,6 +100,10 @@ class HistoryModelBase(ModelBase):
                 
             ## Copy many to many fields 
             for mm in spied_model._meta.many_to_many:
+                ## Check this field should be historised
+                if field_list and not mm.name in field_list:
+                    continue
+                
                 _mm = models.ManyToManyField(Essence, null = True, blank = True, related_name = r'history_' + mm.name + r'_avatar_set')
                 _mm.history_field = True
                 _mm.name = mm.name
