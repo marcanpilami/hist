@@ -47,4 +47,20 @@ def all_history(request):
 def all_tags(request):
     """Shows all tags and their content"""
     return render_to_response('all_tags.html', {'tags':Level.objects.all()})
-                                                
+
+
+def avatar_detail(request, essence_id, version):
+    av = None
+    for a in Avatar.objects.filter(essence__id = int(essence_id)):
+        if a.history_model.history_version == int(version):
+            av = a.history_model
+            break
+    
+    vals=[]
+    for field in av._meta.fields + av._meta.many_to_many:
+        if field.__class__.__name__ == 'ManyToManyField':
+            vals.append({'name':field.name, 'value':getattr(av, field.name).all()})
+        else:
+            vals.append({'name':field.name, 'value':getattr(av, field.name)})
+                    
+    return render_to_response('avatar_detail.html', {'avatar':av, 'vals':vals})                                         
