@@ -1,0 +1,34 @@
+**********************
+** What is hist ?
+**********************
+Hist aims to be a simple history application for Django, following all the 
+changes made on the instances of selected models.
+It then enables the user to make diffs, revert some changes, branch...
+It is fully configurable and as non instrusive as possible.
+
+
+**********************
+** License & sources
+**********************
+It is published under the GPL v3. The full text of the license may be found at
+http://www.gnu.org/licenses/gpl.html
+
+It relies on a proof-of-concept demonstrator of dynamic model creation at load
+time found at http://code.google.com/p/django-history-tables (GPL v3)
+
+
+**********************
+** Documentation
+**********************
+Documentation is to be found in the "doc" folder. 
+
+* Installation & requirements: doc/install.txt (English)
+* Tutorial: doc/tutorial.txt (to be written)
+* API: doc/mode_emploi.txt (French)
+
+
+**********************
+** Contact & project home
+**********************
+Bugs, requests, etc.: marsu_pilami@msn.com
+The latest version can be found at git://github.com/marcanpilami/hist.git

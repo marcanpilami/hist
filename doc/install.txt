@@ -1,0 +1,25 @@
+History module for Django
+Installation instructions
+===============================================================================
+
+Author			: Marc-Antoine Gouillart
+Mail			: marsu_pilami@msn.com
+Latest update 	: 03/01/2009
+
+
+===================================
+== Requirements
+===================================
+Django 1.0 or later (http://www.djangoproject.com)
+(Python 2.4 to 2.6 is a Django requirement)
+
+
+===================================
+== Installation
+===================================
+You just have to put the hist folder in your Django project folder (or create a
+symlink) and reference the hist application in the INSTALLED_APPS in your 
+settings.py file.
+
+In case you want to use the sample views, you'll also have to give them an URL
+in your urls.py (see the dev doc for the description of the different views).
