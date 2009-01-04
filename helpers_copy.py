@@ -16,6 +16,15 @@ class Essence(models.Model):
         return u'objet %s' %self.id
 
 
+def _is_history_field(field):
+    """Check if an avatar field is from the original model"""
+    try:
+        if not field.history_field:
+            return False
+    except AttributeError:
+        return False
+    return True
+
 def _copy_object(original, action_code, version, comment):
     """factorization of common copy code for all signal handlers"""
     ## Create HO object

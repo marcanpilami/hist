@@ -10,7 +10,7 @@
 """
 
 from exceptions import *
-from helpers_copy import _copy_object
+from helpers_copy import _copy_object, _is_history_field
 
 
 def _revert_to(avatar, fork = False):
@@ -37,10 +37,7 @@ def _revert_to(avatar, fork = False):
     ## Single value fields restoration
     for field in avatar._meta.fields:
         ## Check this is a field from the original model
-        try:
-            if not field.history_field:
-                continue
-        except AttributeError:
+        if not _is_history_field(field):
             continue
         
         ## FK handling
