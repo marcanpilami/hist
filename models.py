@@ -168,7 +168,7 @@ class HistoryModel(Avatar):
     history_datetime = models.DateTimeField(default=datetime.datetime.now)
     history_comment = models.CharField(max_length = 1024, blank = True, null = True) # comment on history item
     history_action = models.CharField(max_length=9, 
-                            choices = (('creation','creation'), ('update','update'), ('deletion','deletion'),))
+                            choices = (('creation','creation'), ('update','update'), ('deletion','deletion'),('restoration', 'restoration')))
     history_version = models.IntegerField(max_length = 100)
     
     def __unicode__(self):

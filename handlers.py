@@ -93,7 +93,7 @@ def before_delete_event_handler(sender, instance, **kwargs):
     avatar = instance.current_avatar
     
     ## Reference the deletion and link it to the latest avatar of the object
-    ho = instance._meta.history_model(history_action = 'delete',
+    ho = instance._meta.history_model(history_action = 'deletion',
                                      history_version = version, 
                                      history_comment = u'destruction sans commentaire',
                                      history_active_object = None,

@@ -88,7 +88,7 @@ def _revert_to(avatar, fork = False):
     if fork:
         ho = _copy_object(instance, 'create', 0, u'fork de la version %s de l\'essence %s' %(avatar.history_version, avatar.essence.id))
     else:
-        ho = _copy_object(instance, 'restore', instance.current_version + 1, u'restauration de la version %s' %avatar.history_version)
+        ho = _copy_object(instance, 'restoration', instance.current_version + 1, u'restauration de la version %s' %avatar.history_version)
     ho.history_linked_to_version = avatar
     ho.save()
     
